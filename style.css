@@ -1,0 +1,404 @@
+:root {
+    --bg-color: #121212;
+    --panel-bg: rgba(25, 25, 30, 0.7);
+    --panel-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #f0f0f4;
+    --text-secondary: #a0a0ab;
+    --accent-color: #6366f1; /* Indigo */
+    --accent-hover: #4f46e5;
+    --danger-color: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    overflow: hidden;
+}
+
+#app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+}
+
+/* Glassmorphism Panel */
+#controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 380px;
+    max-height: calc(100vh - 40px);
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--panel-border);
+    border-radius: 20px;
+    padding: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    overflow-y: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Scrollbar for Panel */
+#controls::-webkit-scrollbar {
+    width: 6px;
+}
+#controls::-webkit-scrollbar-track {
+    background: transparent;
+}
+#controls::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.2);
+    border-radius: 10px;
+}
+
+header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a5b4fc, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+}
+
+header p {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    flex-grow: 1;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+}
+
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+input[type="file"] {
+    padding: 8px;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed var(--panel-border);
+}
+
+.help-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+#loading-spinner-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    justify-content: center;
+}
+.loading-text {
+    font-size: 14px;
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+}
+
+.via-point-group {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.via-point-group input {
+    flex-grow: 1;
+}
+.remove-via-btn {
+    background: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    flex-grow: 0;
+}
+.remove-via-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.sm-btn {
+    background: transparent;
+    border: 1px dashed var(--panel-border);
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+}
+.sm-btn:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+.input-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s;
+}
+
+input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.button-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-grow: 1;
+    transition: background 0.2s, transform 0.1s;
+}
+
+button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Spinner Animation */
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.hidden {
+    display: none !important;
+}
+
+#error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid var(--danger-color);
+    color: #fca5a5;
+    padding: 12px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.route-info {
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.route-info h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.route-info p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+/* Weather List */
+.weather-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.weather-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.2s, background 0.2s;
+    cursor: pointer;
+}
+
+.weather-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.weather-icon {
+    font-size: 28px;
+}
+
+.weather-details {
+    flex-grow: 1;
+}
+
+.weather-time {
+    font-size: 12px;
+    color: var(--accent-color);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.weather-temp {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.weather-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Map area */
+#map {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* Custom Leaflet Controls style for dark theme */
+.leaflet-container {
+    background: #1a1a1a;
+}
+.leaflet-bar {
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+.leaflet-bar a {
+    background-color: var(--panel-bg) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--panel-border) !important;
+    backdrop-filter: blur(8px);
+}
+.leaflet-bar a:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Custom Map Marker Popup */
+.leaflet-popup-content-wrapper {
+    background: var(--panel-bg);
+    color: var(--text-primary);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+.leaflet-popup-tip {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+}
+.leaflet-popup-content {
+    margin: 14px;
+    font-family: 'Inter', sans-serif;
+}
+.popup-custom-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 4px;
+}
+.popup-custom-data {
+    font-size: 16px;
+}

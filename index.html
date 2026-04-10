@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Weather Forecast</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- Sidebar / Panel -->
+        <div class="glass-panel" id="controls">
+            <header>
+                <h1>Route Weather</h1>
+                <p>目的地までの道中の天気を確認</p>
+            </header>
+
+            <div class="settings-panel" style="margin-top: 4px; margin-bottom: 16px; padding: 12px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px;">
+                <p style="font-size: 13px; font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">📝 検索設定</p>
+                
+                <div class="input-row" style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label for="date-select">出発予定日</label>
+                        <select id="date-select"></select>
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label for="time-select">出発時刻</label>
+                        <select id="time-select"></select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="mode-select">移動手段</label>
+                    <select id="mode-select">
+                        <option value="driving">🚗 車</option>
+                        <option value="cycling">🚲 自転車</option>
+                        <option value="walking">🚶 徒歩</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="search-tab">地点検索</button>
+                <button class="tab-btn" data-tab="upload-tab">ファイル / 共有URL</button>
+            </div>
+
+            <div id="search-tab" class="tab-content active">
+                <form id="route-form">
+                    <div class="input-group">
+                        <label for="start-input">出発地 (Start)</label>
+                        <input type="text" id="start-input" placeholder="例: 東京駅" required>
+                    </div>
+
+                    <div id="via-points-container">
+                        <!-- 動的に経由地フォームが追加されます -->
+                    </div>
+                    
+                    <button type="button" id="add-via-btn" class="sm-btn">＋ 経由地を追加</button>
+                    
+                    <div class="input-group" style="margin-top: 8px;">
+                        <label for="end-input">目的地 (Destination)</label>
+                        <input type="text" id="end-input" placeholder="例: 箱根" required>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" id="search-btn">経路と天気を検索</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="upload-tab" class="tab-content">
+                <form id="upload-form">
+                    <div class="input-group" style="margin-bottom: 8px;">
+                        <label for="url-input">Google Maps 共有URL</label>
+                        <input type="url" id="url-input" placeholder="https://maps.app.goo.gl/..." autocomplete="off">
+                        <p class="help-text">※通常の経路やマイマップの共有URLをペースト</p>
+                    </div>
+
+                    <div style="text-align: center; font-size: 11px; color: var(--text-secondary); margin: 8px 0;">または</div>
+
+                    <div class="input-group">
+                        <label for="file-input">KML / GeoJSON アップロード</label>
+                        <input type="file" id="file-input" accept=".kml,.geojson,.json">
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" id="upload-btn">読み込みと天気を検索</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="loading-spinner-container" class="hidden">
+                 <div id="loading-spinner" class="spinner"></div>
+                 <span class="loading-text">計算中...</span>
+            </div>
+
+            <div id="error-message" class="hidden"></div>
+            
+            <div class="route-info" id="route-info" style="display: none;">
+                <h3>経路サマリー</h3>
+                <p id="distance-text">距離: ---</p>
+                <p id="duration-text">所要時間: ---</p>
+            </div>
+            
+            <div class="weather-list" id="weather-list">
+                <!-- Weather cards will be inserted here dynamically -->
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Application Scripts -->
+    <script src="RoutingProvider.js"></script>
+    <script src="FileRoutingProvider.js"></script>
+    <script src="UrlRoutingProvider.js"></script>
+    <script src="WeatherService.js"></script>
+    <script src="MapManager.js"></script>
+    <script src="app.js"></script></body>
+</html>
