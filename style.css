@@ -51,8 +51,19 @@ body, html {
     flex-direction: column;
     gap: 20px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden; /* Control content via child scroll area */
+    display: flex;
+    flex-direction: column;
+}
+
+#controls-scroll-area {
     overflow-y: auto;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.1s ease-out;
+    height: 100%;
+    width: 100%;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 #resize-handle {
@@ -100,13 +111,13 @@ body, html {
 }
 
 /* Custom Scrollbar for Panel */
-#controls::-webkit-scrollbar {
+#controls-scroll-area::-webkit-scrollbar {
     width: 6px;
 }
-#controls::-webkit-scrollbar-track {
+#controls-scroll-area::-webkit-scrollbar-track {
     background: transparent;
 }
-#controls::-webkit-scrollbar-thumb {
+#controls-scroll-area::-webkit-scrollbar-thumb {
     background-color: rgba(255,255,255,0.2);
     border-radius: 10px;
 }
@@ -116,6 +127,7 @@ header h1 {
     font-weight: 700;
     background: linear-gradient(135deg, #a5b4fc, #6366f1);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 4px;
 }
@@ -123,6 +135,23 @@ header h1 {
 header p {
     font-size: 13px;
     color: var(--text-secondary);
+}
+
+.header-hint {
+    display: none; /* Hide on PC */
+}
+
+.hint-text {
+    margin-top: 10px;
+    color: var(--accent-color) !important;
+    font-size: 10px !important; /* Adjusted to 10px */
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.hint-text strong {
+    color: inherit;
+    font-weight: 700;
 }
 
 form {
@@ -184,16 +213,26 @@ input[type="file"] {
 }
 
 #loading-spinner-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     padding: 12px;
     justify-content: center;
+    z-index: 9999;
+    background: rgba(18, 18, 18, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 .loading-text {
-    font-size: 14px;
-    color: var(--accent-color);
+    font-size: 16px;
+    color: var(--text-primary);
     font-weight: 600;
+    letter-spacing: 1px;
 }
 
 .settings-panel {
@@ -400,8 +439,10 @@ button:active {
     border: 1px solid var(--panel-border);
     border-radius: 16px;
     padding: 18px;
+    margin-top: 20px; /* Added margin-top */
     margin-bottom: 20px;
     display: none; /* Controlled by JS */
+    scroll-margin-top: 20px; /* PC offset */
 }
 
 .route-info h3 {
@@ -410,6 +451,7 @@ button:active {
     letter-spacing: 1px;
     color: var(--accent-color);
     margin-bottom: 12px;
+    font-weight: 700; /* Bold */
 }
 
 .route-info p {
@@ -426,10 +468,11 @@ button:active {
     padding: 16px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     margin-bottom: 8px;
+    flex-wrap: nowrap; /* Ensure no wrap */
 }
 
 .weather-card:hover {
@@ -489,6 +532,10 @@ button:active {
     flex-shrink: 0;
     width: 36px !important;
     height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important; /* Strictly fix size */
+    min-height: 36px !important;
+    max-height: 36px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center;
@@ -501,7 +548,7 @@ button:active {
     transition: all 0.2s !important;
     box-shadow: none !important;
     cursor: pointer;
-    margin-left: 8px;
+    margin-left: auto; /* Push to far right */
 }
 
 .weather-delete-btn:hover {
@@ -519,44 +566,101 @@ button:active {
 
     #controls {
         position: fixed;
-        top: auto;
-        bottom: 0;
+        top: 0;
+        bottom: auto;
         left: 0;
         width: 100% !important;
         max-width: 100% !important;
-        height: 60vh;
+        height: 50vh;
         max-height: 85vh;
-        border-radius: 24px 24px 0 0;
+        border-radius: 0 0 24px 24px;
         margin: 0;
-        padding: 24px 20px 20px 20px; /* Top padding for handle */
+        padding: 0;
         z-index: 2000;
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #controls-scroll-area {
+        padding: 0;
+        gap: 0;
+    }
+
+    #controls-scroll-area > div:not(#mobile-resize-handle), 
+    #controls-scroll-area > form,
+    #controls-scroll-area > .weather-list {
+        padding-left: 20px;
+        padding-right: 20px;
     }
 
     #resize-handle {
         display: none;
     }
 
-    #mobile-resize-handle {
-        display: flex;
-        top: -24px;
-        margin-left: -20px;
-        margin-right: -20px;
-        width: calc(100% + 40px);
+    header {
+        position: sticky;
+        top: 0;
+        background: rgba(25, 25, 30, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        z-index: 100;
+        padding: 24px 20px 12px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     header h1 {
         font-size: 20px;
-        margin-top: 10px;
+    }
+
+    #mobile-resize-handle {
+        display: flex;
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40px;
+        cursor: ns-resize;
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        background: rgba(25, 25, 30, 0.8);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 20px;
+    }
+
+    #mobile-resize-handle::after {
+        content: "";
+        width: 60px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+    }
+
+    /* Padding for contents inside scroll area since we moved them */
+    #controls-scroll-area > div:not(#mobile-resize-handle), 
+    #controls-scroll-area > form,
+    #controls-scroll-area > .weather-list {
+        padding-left: 20px;
+        padding-right: 20px;
     }
 
     #map {
-        height: 40vh;
+        height: 100vh;
         width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
     }
 
     .settings-panel {
-        padding: 12px;
+        padding: 16px;
+        margin-top: 16px;
         margin-bottom: 16px;
     }
 
@@ -567,6 +671,58 @@ button:active {
     
     .weather-card {
         padding: 12px;
+    }
+
+    /* Move zoom controls up slightly so they aren't hidden by handle if sheet is tall */
+    .leaflet-bottom.leaflet-right {
+        bottom: 20px;
+        right: 10px;
+    }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-hint {
+        display: block;
+        font-size: 10px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-align: right;
+        max-width: 40%;
+        line-height: 1.4;
+    }
+
+    #panel-hint {
+        display: none; /* Hide in panel on mobile */
+    }
+
+    /* Restore original route info block on mobile */
+    .route-info {
+        display: none; /* Initial hidden state, controlled by JS */
+        margin-top: 24px;
+        scroll-margin-top: 80px; /* Important for scrollIntoView with sticky header */
+    }
+
+    /* Full screen loading for mobile - ensure it's truly full screen */
+    #loading-spinner-container {
+        background: rgba(10, 10, 12, 0.8);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    #loading-spinner-container .spinner {
+        width: 50px;
+        height: 50px;
+        border-width: 5px;
+    }
+
+    #loading-spinner-container .loading-text {
+        font-size: 20px;
     }
 }
 

@@ -24,8 +24,9 @@ class MapManager {
     /**
      * 経路（ポリライン）を描画します
      * @param {Array<[number, number]>} routeCoords 
+     * @param {Object} fitOptions LeafletのfitBoundsオプション
      */
-    drawRoute(routeCoords) {
+    drawRoute(routeCoords, fitOptions = { padding: [50, 50] }) {
         // 既存のルートを削除
         if (this.routeLayer) {
             this.map.removeLayer(this.routeLayer);
@@ -41,7 +42,7 @@ class MapManager {
         }).addTo(this.map);
 
         // ルート全体が見えるようにズームを調整
-        this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
+        this.map.fitBounds(this.routeLayer.getBounds(), fitOptions);
     }
 
     /**
@@ -77,6 +78,19 @@ class MapManager {
             marker.bindPopup(popupContent);
             this.weatherMarkers.push(marker);
         });
+    }
+
+    /**
+     * 指定した座標を、画面中心からオフセットした位置に表示するように移動します
+     * @param {Array<number, number>} latlng 
+     * @param {number} zoom 
+     * @param {number} offsetPx Y方向のオフセット（正の値で下へ移動）
+     */
+    flyToWithOffset(latlng, zoom, offsetPx) {
+        // 現在のズームレベルまたは指定のズームレベルで座標をピクセルに変換
+        const targetPoint = this.map.project(latlng, zoom).subtract([0, offsetPx]);
+        const targetLatLng = this.map.unproject(targetPoint, zoom);
+        this.map.flyTo(targetLatLng, zoom, { duration: 0.5 });
     }
 
     clear() {

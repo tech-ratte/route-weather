@@ -39,6 +39,7 @@ const weatherListObj = document.getElementById('weather-list');
 
 // Resize Sidebar Logic
 const controlsPanel = document.getElementById('controls');
+const controlsScrollArea = document.getElementById('controls-scroll-area');
 const resizeHandle = document.getElementById('resize-handle');
 const mobileResizeHandle = document.getElementById('mobile-resize-handle');
 let isResizing = false;
@@ -49,10 +50,15 @@ function init() {
     mapManager = new MapManager('map');
 
     // サイドバーのリサイズ (PC - 横幅)
+    let startX, startWidth;
     resizeHandle.addEventListener('mousedown', (e) => {
         isResizing = true;
+        startX = e.clientX;
+        startWidth = controlsPanel.offsetWidth;
         document.body.style.cursor = 'ew-resize';
         resizeHandle.classList.add('resizing');
+        // リサイズ中は遷移（アニメーション）を無効化
+        controlsPanel.style.transition = 'none';
         e.preventDefault();
     });
 
@@ -72,7 +78,9 @@ function init() {
 
     const onMove = (e) => {
         if (isResizing) {
-            const newWidth = (e.clientX || e.touches[0].clientX) - controlsPanel.getBoundingClientRect().left;
+            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : null);
+            if (clientX === null) return;
+            const newWidth = startWidth + (clientX - startX);
             if (newWidth > 300 && newWidth < 800) {
                 controlsPanel.style.width = `${newWidth}px`;
             }
@@ -80,10 +88,9 @@ function init() {
             const clientY = e.clientY || (e.touches ? e.touches[0].clientY : null);
             if (clientY === null) return;
 
-            const panelRect = controlsPanel.getBoundingClientRect();
-            // 下端からの高さ
-            const newHeight = window.innerHeight - clientY;
-            const minHeight = window.innerHeight * 0.2;
+            // 上端からの高さ (mobileResizeHandle が下端にあるため)
+            const newHeight = clientY;
+            const minHeight = window.innerHeight * 0.15;
             const maxHeight = window.innerHeight * 0.85;
 
             if (newHeight > minHeight && newHeight < maxHeight) {
@@ -101,6 +108,8 @@ function init() {
             isMobileResizing = false;
             document.body.style.cursor = 'default';
             resizeHandle.classList.remove('resizing');
+            // 遷移（アニメーション）を元に戻す
+            controlsPanel.style.transition = '';
         }
     };
 
@@ -336,7 +345,13 @@ async function processRouteAndWeather(routeData, targetDate) {
     weatherListObj.innerHTML = '';
     
     // 経路上に線を引く
-    mapManager.drawRoute(routeData.routeCoordinates);
+    const isMobile = window.innerWidth <= 768;
+    const panelH = controlsPanel.offsetHeight;
+    const fitOptions = isMobile 
+        ? { paddingTopLeft: [0, panelH + 20], paddingBottomRight: [20, 20] } 
+        : { padding: [50, 50] };
+        
+    mapManager.drawRoute(routeData.routeCoordinates, fitOptions);
     
     // 追加: 道路（ポリライン）自体のクリックイベント
     if (mapManager.routeLayer) {
@@ -352,6 +367,13 @@ async function processRouteAndWeather(routeData, targetDate) {
     distanceText.textContent = `距離: ${formatDistance(routeData.distance)}`;
     durationText.textContent = `所要時間: ${formatDuration(routeData.duration)}`;
     routeInfoBox.style.display = 'block';
+    
+    // 計算完了後、経路サマリーが理想的な位置（一番上）にくるようにスクロール
+    setTimeout(() => {
+        if (routeInfoBox) {
+            routeInfoBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 200);
 
     // 経路上の天気情報を取得 (5地点)
     currentWeatherDataList = await weatherService.getWeatherAlongRoute(
@@ -459,7 +481,24 @@ function renderWeatherList(weatherDataList) {
 
         // カードクリックで地図移動
         card.addEventListener('click', () => {
-            mapManager.map.flyTo(data.location, 11, { duration: 0.5 });
+            const viewportH = window.innerHeight;
+            const panelH = controlsPanel.offsetHeight;
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // パネルが上にある場合、パネル下端から画面下端までが可視領域
+                const visibleH = viewportH - panelH;
+                const visibleCenterY = panelH + (visibleH / 2);
+                const screenCenterY = viewportH / 2;
+                // screenCenterY (500) から visibleCenterY (700) へ移動させたい
+                // つまりマップの中心を上に offsetPx 分ずらす
+                const pixelOffset = visibleCenterY - screenCenterY;
+                
+                mapManager.flyToWithOffset(data.location, 11, pixelOffset);
+            } else {
+                mapManager.map.flyTo(data.location, 11, { duration: 0.5 });
+            }
+            
             const marker = mapManager.weatherMarkers[index];
             if (marker) marker.openPopup();
         });
