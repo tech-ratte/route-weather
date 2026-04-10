@@ -9,7 +9,7 @@ class FileRoutingProvider extends RoutingProvider {
     }
 
     setMode(mode) {
-        if (['driving', 'cycling', 'walking'].includes(mode)) {
+        if (['car', 'bicycle', 'foot'].includes(mode)) {
             this.mode = mode;
         }
     }
@@ -51,8 +51,8 @@ class FileRoutingProvider extends RoutingProvider {
                     // 移動手段に基づく速度(m/s)で所要時間を計算
                     // 徒歩: 約5km/h (1.4m/s), 自転車: 約15km/h (4.2m/s), 車: 約40km/h (11.1m/s)
                     let speed = 11.1; 
-                    if (this.mode === 'walking') speed = 1.4;
-                    else if (this.mode === 'cycling') speed = 4.2;
+                    if (this.mode === 'foot') speed = 1.4;
+                    else if (this.mode === 'bicycle') speed = 4.2;
 
                     const duration = distance / speed; 
                     

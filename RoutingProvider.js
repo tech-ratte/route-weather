@@ -28,7 +28,7 @@ class OsrmRoutingProvider extends RoutingProvider {
     }
 
     setMode(mode) {
-        if (['driving', 'cycling', 'walking'].includes(mode)) {
+        if (['car', 'bicycle', 'foot'].includes(mode)) {
             this.mode = mode;
         }
     }
@@ -103,7 +103,15 @@ class OsrmRoutingProvider extends RoutingProvider {
         // locations is array of [lat, lng]
         // OSRM requires lon,lat format separated by ;
         const coordsStr = locations.map(loc => `${loc[1]},${loc[0]}`).join(';');
-        const url = `https://router.project-osrm.org/route/v1/${this.mode}/${coordsStr}?overview=full&geometries=geojson`;
+        
+        // routing.openstreetmap.de supports car, bicycle (bike), foot
+        const profileMap = {
+            'car': 'car',
+            'bicycle': 'bike',
+            'foot': 'foot'
+        };
+        const profile = profileMap[this.mode] || 'car';
+        const url = `https://routing.openstreetmap.de/routed-${profile}/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
         
         const res = await fetch(url);
         if (!res.ok) throw new Error("Routing failed");

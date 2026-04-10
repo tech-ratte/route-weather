@@ -37,9 +37,39 @@ const distanceText = document.getElementById('distance-text');
 const durationText = document.getElementById('duration-text');
 const weatherListObj = document.getElementById('weather-list');
 
+// Resize Sidebar Logic
+const controlsPanel = document.getElementById('controls');
+const resizeHandle = document.getElementById('resize-handle');
+let isResizing = false;
+
 function init() {
     // 地図の初期化
     mapManager = new MapManager('map');
+
+    // サイドバーのリサイズ
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'ew-resize';
+        resizeHandle.classList.add('resizing');
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        
+        const newWidth = e.clientX - controlsPanel.getBoundingClientRect().left;
+        if (newWidth > 300 && newWidth < 800) {
+            controlsPanel.style.width = `${newWidth}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = 'default';
+            resizeHandle.classList.remove('resizing');
+        }
+    });
 
     // 日時プルダウンの初期化
     populateDateTimeSelects();
@@ -97,7 +127,11 @@ function init() {
         setLoading(true, searchBtn);
         try {
             const transportMode = modeSelect.value;
-            routingProvider.setMode(transportMode); // To be implemented
+            // OSRMのプロファイル名に変換 (driving -> car, cycling -> bicycle, walking -> foot)
+            const osrmMode = transportMode === 'driving' ? 'car' : 
+                             transportMode === 'cycling' ? 'bicycle' : 'foot';
+            
+            routingProvider.setMode(osrmMode);
             const routeData = await routingProvider.getRoute(waypoints);
             
             await processRouteAndWeather(routeData, targetDate);
@@ -126,8 +160,11 @@ function init() {
         setLoading(true, uploadBtn);
         try {
             const transportMode = modeSelect.value;
-            routingProvider.setMode(transportMode);
-            fileRoutingProvider.setMode(transportMode); // To calculate duration for files
+            const osrmMode = transportMode === 'driving' ? 'car' : 
+                             transportMode === 'cycling' ? 'bicycle' : 'foot';
+            
+            routingProvider.setMode(osrmMode);
+            fileRoutingProvider.setMode(osrmMode); // To calculate duration for files
 
             let routeData;
             if (urlValue) {
