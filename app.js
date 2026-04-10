@@ -9,6 +9,9 @@ let mapManager;
 const form = document.getElementById('route-form');
 const startInput = document.getElementById('start-input');
 const endInput = document.getElementById('end-input');
+const currentLocBtn = document.getElementById('current-loc-btn');
+
+let currentGeoPos = null;
 
 const viaPointsContainer = document.getElementById('via-points-container');
 const addViaBtn = document.getElementById('add-via-btn');
@@ -70,9 +73,15 @@ function init() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const startObj = startInput.value.trim();
+        const startValue = startInput.value.trim();
         const endObj = endInput.value.trim();
-        if (!startObj || !endObj) return;
+        if (!startValue || !endObj) return;
+
+        // "現在地" の判定と座標変換
+        let startObj = startValue;
+        if (startValue === "現在地" && currentGeoPos) {
+            startObj = `${currentGeoPos.lat}, ${currentGeoPos.lng}`;
+        }
 
         // 経由地の取得
         const viaInputs = Array.from(viaPointsContainer.querySelectorAll('.via-input'));
@@ -139,28 +148,37 @@ function init() {
         }
     });
 
-    // マップ上のクリックイベントリスナー (ドロップピン機能)
-    mapManager.map.on('click', async (e) => {
-        // もしルートが引かれていなければ何もしない
-        if (!mapManager.routeLayer) return;
-        
-        // クリックしたポイントを取得し天気を追加する
-        const latlng = e.latlng;
-        await addCustomWeatherPoint([latlng.lat, latlng.lng]);
-    });
+    // ※ マップ全体へのクリックリスナーは削除し、経路（routeLayer）へのクリックのみに限定します
+    // (路線のクリックイベントは processRouteAndWeather 内で動的に付与します)
 
-    // 初期化時に現在地を取得して、出発地に自動セットする
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            // Nominatimの仕様上、短すぎる小数点以下だと地名検索で失敗しにくいため少し丸めるか、そのまま渡す
-            // RoutingProvider内の regex /^([+-]?\d+\.\d+),\s*([+-]?\d+\.\d+)$/ で確実に座標と判定させる
-            startInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        }, (err) => {
-            console.log("現在地の取得が許可されていない、または失敗しました", err);
+    // 現在地ボタンのクリックイベント
+    if (currentLocBtn && navigator.geolocation) {
+        currentLocBtn.addEventListener('click', () => {
+            currentLocBtn.innerText = "⏳";
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    currentGeoPos = {
+                        lat: pos.coords.latitude.toFixed(6),
+                        lng: pos.coords.longitude.toFixed(6)
+                    };
+                    startInput.value = "現在地";
+                    currentLocBtn.innerText = "📍";
+                },
+                (err) => {
+                    console.error(err);
+                    showError("現在地の取得に失敗しました。以前の許可をリセットするか、手動で入力してください。");
+                    currentLocBtn.innerText = "📍";
+                }
+            );
         });
     }
+
+    // 入力欄が手動で変更されたら現在地フラグをリセット
+    startInput.addEventListener('input', () => {
+        if (startInput.value !== "現在地") {
+            currentGeoPos = null;
+        }
+    });
 }
 
 function getSelectedDate() {
@@ -247,6 +265,16 @@ async function processRouteAndWeather(routeData, targetDate) {
     // 経路上に線を引く
     mapManager.drawRoute(routeData.routeCoordinates);
     
+    // 追加: 道路（ポリライン）自体のクリックイベント
+    if (mapManager.routeLayer) {
+        mapManager.routeLayer.on('click', async (e) => {
+            // イベントの伝播を止める
+            L.DomEvent.stopPropagation(e);
+            const latlng = e.latlng;
+            await addCustomWeatherPoint([latlng.lat, latlng.lng]);
+        });
+    }
+    
     // サマリーを表示
     distanceText.textContent = `距離: ${formatDistance(routeData.distance)}`;
     durationText.textContent = `所要時間: ${formatDuration(routeData.duration)}`;
@@ -259,6 +287,9 @@ async function processRouteAndWeather(routeData, targetDate) {
         targetDate, 
         routeData.duration
     );
+
+    // IDを付与 (削除用)
+    currentWeatherDataList.forEach((d, i) => d.id = `point-${Date.now()}-${i}`);
     
     // マップ上に天気をプロット
     mapManager.drawWeatherMarkers(currentWeatherDataList, weatherService);
@@ -302,8 +333,9 @@ async function addCustomWeatherPoint(latlng) {
     const timeOffsetMs = fraction * currentRouteData.duration * 1000;
     const pointTime = new Date(baseTimeMs + timeOffsetMs);
 
-    // 天気取得 (ボタンを一時的にdisabledにするなどのUIロックは割愛)
+    // 天気取得
     const data = await weatherService.getSinglePointWeather(latlng, pointTime, "カスタムポイント");
+    data.id = `custom-${Date.now()}`;
     
     // リストの後ろ（または進捗順にソートして）追加
     currentWeatherDataList.push(data);
@@ -322,7 +354,6 @@ function renderWeatherList(weatherDataList) {
     weatherDataList.forEach((data, index) => {
         const wInfo = weatherService.getWeatherIcon(data.weathercode);
         
-        // expectedTime があればそれをパース、なければ time から
         let dateStr = "";
         const targetT = data.expectedTime ? new Date(data.expectedTime) : (data.time ? new Date(data.time) : null);
         if (targetT) {
@@ -342,9 +373,19 @@ function renderWeatherList(weatherDataList) {
                 <div class="weather-desc">${wInfo.text}${dateStr}</div>
             </div>
             <div class="weather-temp">${data.temperature}°C</div>
+            <button class="weather-delete-btn" title="削除">🗑️</button>
         `;
         
-        card.addEventListener('mouseenter', () => {
+        // 削除ボタンのイベント
+        card.querySelector('.weather-delete-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // カード自体のクリックイベント（zoomなど）を防ぐ
+            currentWeatherDataList = currentWeatherDataList.filter(item => item.id !== data.id);
+            mapManager.drawWeatherMarkers(currentWeatherDataList, weatherService);
+            renderWeatherList(currentWeatherDataList);
+        });
+
+        // カードクリックで地図移動
+        card.addEventListener('click', () => {
             mapManager.map.flyTo(data.location, 11, { duration: 0.5 });
             const marker = mapManager.weatherMarkers[index];
             if (marker) marker.openPopup();

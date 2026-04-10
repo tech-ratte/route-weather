@@ -15,20 +15,21 @@
     <div id="app-container">
         <!-- Sidebar / Panel -->
         <div class="glass-panel" id="controls">
+            <div id="resize-handle"></div>
             <header>
                 <h1>Route Weather</h1>
                 <p>目的地までの道中の天気を確認</p>
             </header>
 
-            <div class="settings-panel" style="margin-top: 4px; margin-bottom: 16px; padding: 12px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px;">
-                <p style="font-size: 13px; font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">📝 検索設定</p>
+            <div class="settings-panel">
+                <p class="settings-title">📝 検索設定</p>
                 
-                <div class="input-row" style="display: flex; gap: 8px; margin-bottom: 10px;">
-                    <div class="input-group" style="flex: 1;">
+                <div class="input-row">
+                    <div class="input-group">
                         <label for="date-select">出発予定日</label>
                         <select id="date-select"></select>
                     </div>
-                    <div class="input-group" style="flex: 1;">
+                    <div class="input-group">
                         <label for="time-select">出発時刻</label>
                         <select id="time-select"></select>
                     </div>
@@ -53,7 +54,10 @@
                 <form id="route-form">
                     <div class="input-group">
                         <label for="start-input">出発地 (Start)</label>
-                        <input type="text" id="start-input" placeholder="例: 東京駅" required>
+                        <div class="input-with-button">
+                            <input type="text" id="start-input" placeholder="例: 東京駅" required>
+                            <button type="button" id="current-loc-btn" title="現在地を取得">📍</button>
+                        </div>
                     </div>
 
                     <div id="via-points-container">
@@ -62,7 +66,7 @@
                     
                     <button type="button" id="add-via-btn" class="sm-btn">＋ 経由地を追加</button>
                     
-                    <div class="input-group" style="margin-top: 8px;">
+                    <div class="input-group">
                         <label for="end-input">目的地 (Destination)</label>
                         <input type="text" id="end-input" placeholder="例: 箱根" required>
                     </div>
@@ -75,13 +79,16 @@
 
             <div id="upload-tab" class="tab-content">
                 <form id="upload-form">
-                    <div class="input-group" style="margin-bottom: 8px;">
+                    <div class="input-group">
                         <label for="url-input">Google Maps 共有URL</label>
-                        <input type="url" id="url-input" placeholder="https://maps.app.goo.gl/..." autocomplete="off">
-                        <p class="help-text">※通常の経路やマイマップの共有URLをペースト</p>
+                        <input type="url" id="url-input" placeholder="https://www.google.com/maps/dir/..." autocomplete="off">
+                        <p class="help-text">
+                            <strong>【推奨】</strong> ブラウザのアドレスバーにある長いURLをコピーして貼り付けてください。<br>
+                            ※「短い共有リンク」は解析できない場合があります。
+                        </p>
                     </div>
 
-                    <div style="text-align: center; font-size: 11px; color: var(--text-secondary); margin: 8px 0;">または</div>
+                    <div class="divider">または</div>
 
                     <div class="input-group">
                         <label for="file-input">KML / GeoJSON アップロード</label>
@@ -101,10 +108,13 @@
 
             <div id="error-message" class="hidden"></div>
             
-            <div class="route-info" id="route-info" style="display: none;">
+            <div class="route-info" id="route-info">
                 <h3>経路サマリー</h3>
                 <p id="distance-text">距離: ---</p>
                 <p id="duration-text">所要時間: ---</p>
+                <p class="hint-text" style="margin-top: 10px; color: var(--accent-color); font-size: 11px; font-weight: 600;">
+                    💡 地図上の<strong>ルート（青い線）をクリック</strong>すると、その地点の天気を追加できます。
+                </p>
             </div>
             
             <div class="weather-list" id="weather-list">

@@ -96,12 +96,13 @@ form {
     background: transparent;
     border: 1px solid var(--panel-border);
     color: var(--text-secondary);
-    padding: 8px 12px;
-    font-size: 12px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 12px;
     cursor: pointer;
-    flex-grow: 1;
-    transition: all 0.2s;
+    flex: 1; /* Stretch to fill */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-btn.active {
@@ -149,12 +150,63 @@ input[type="file"] {
     font-weight: 600;
 }
 
+.settings-panel {
+    margin-top: 4px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
+}
+
+.settings-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.input-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.input-row .input-group {
+    flex: 1;
+}
+
+.divider {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin: 12px 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--panel-border);
+}
+
 .input-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
     position: relative;
+    margin-bottom: 4px;
 }
+
+/* ... existing via styles ... */
 
 .via-point-group {
     margin-top: 8px;
@@ -174,9 +226,11 @@ input[type="file"] {
     font-size: 14px;
     cursor: pointer;
     flex-grow: 0;
+    transition: all 0.2s ease;
 }
 .remove-via-btn:hover {
     background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.05);
 }
 
 .sm-btn {
@@ -184,78 +238,224 @@ input[type="file"] {
     border: 1px dashed var(--panel-border);
     color: var(--text-secondary);
     font-size: 12px;
-    padding: 8px;
+    padding: 10px;
     border-radius: 8px;
     cursor: pointer;
     width: 100%;
-    margin-top: 8px;
+    margin: 12px 0;
+    transition: all 0.2s ease;
 }
+
 .sm-btn:hover {
-    border-color: var(--text-primary);
+    border-color: var(--accent-color);
     color: var(--text-primary);
+    background: rgba(99, 102, 241, 0.05);
 }
 
-.input-group label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+/* ... input styles ... */
+
+.input-with-button {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
-input {
+#current-loc-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--panel-border);
+    color: var(--text-primary);
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-grow: 0;
+    width: auto;
+    font-size: 16px;
+    box-shadow: none;
+}
+
+#current-loc-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--accent-color);
+}
+
+input[type="text"], input[type="file"], input[type="url"], input[type="datetime-local"], select {
+    width: 100%;
+    padding: 12px 16px;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--panel-border);
     border-radius: 10px;
-    padding: 12px 16px;
     color: var(--text-primary);
     font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: all 0.2s;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
-input:focus {
+select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+select option {
+    background: #1e1e24;
+    color: var(--text-primary);
+}
+
+input:focus, select:focus {
+    outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .button-group {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 8px;
+    margin-top: 16px;
 }
 
 button {
     background: var(--accent-color);
     color: white;
     border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
+    border-radius: 12px;
+    padding: 14px 24px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     flex-grow: 1;
-    transition: background 0.2s, transform 0.1s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
 button:hover {
     background: var(--accent-hover);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
 }
 
 button:active {
-    transform: translateY(1px);
+    transform: translateY(0);
 }
 
-button:disabled {
-    background: var(--text-secondary);
-    cursor: not-allowed;
-    transform: none;
+/* ... results and map styles ... */
+
+.route-info {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 20px;
+    display: none; /* Controlled by JS */
 }
 
-/* Spinner Animation */
+.route-info h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-color);
+    margin-bottom: 12px;
+}
+
+.route-info p {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.weather-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+.weather-card:hover {
+    background: rgba(255, 255, 255, 0.07);
+    transform: scale(1.02) translateX(4px);
+    border-color: var(--accent-color);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.weather-icon {
+    font-size: 32px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.weather-time {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent-color);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.weather-temp {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.weather-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Map area */
+#map {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* Map controls */
+.leaflet-bar {
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.leaflet-bar a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    background-color: var(--panel-bg) !important;
+    color: var(--text-primary) !important;
+    backdrop-filter: blur(12px);
+}
+
+.leaflet-popup-content-wrapper {
+    background: var(--panel-bg) !important;
+    color: var(--text-primary) !important;
+    backdrop-filter: blur(16px) !important;
+    border-radius: 16px !important;
+    padding: 8px !important;
+}
+
+.leaflet-popup-tip {
+    background: var(--panel-bg) !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
 .spinner {
     width: 24px;
     height: 24px;
@@ -270,135 +470,6 @@ button:disabled {
     100% { transform: rotate(360deg); }
 }
 
-.hidden {
-    display: none !important;
-}
-
-#error-message {
-    background: rgba(239, 68, 68, 0.1);
-    border-left: 3px solid var(--danger-color);
-    color: #fca5a5;
-    padding: 12px;
-    border-radius: 0 8px 8px 0;
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.route-info {
-    background: rgba(255,255,255,0.03);
-    border-radius: 12px;
-    padding: 16px;
-}
-
-.route-info h3 {
-    font-size: 14px;
-    margin-bottom: 8px;
-    color: var(--text-primary);
-}
-
-.route-info p {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-}
-
-/* Weather List */
-.weather-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.weather-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 14px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    transition: transform 0.2s, background 0.2s;
-    cursor: pointer;
-}
-
-.weather-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateX(4px);
-}
-
-.weather-icon {
-    font-size: 28px;
-}
-
-.weather-details {
-    flex-grow: 1;
-}
-
-.weather-time {
-    font-size: 12px;
-    color: var(--accent-color);
-    font-weight: 600;
-    margin-bottom: 2px;
-}
-
-.weather-temp {
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.weather-desc {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-/* Map area */
-#map {
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
-}
-
-/* Custom Leaflet Controls style for dark theme */
-.leaflet-container {
-    background: #1a1a1a;
-}
-.leaflet-bar {
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-}
-.leaflet-bar a {
-    background-color: var(--panel-bg) !important;
-    color: var(--text-primary) !important;
-    border-bottom: 1px solid var(--panel-border) !important;
-    backdrop-filter: blur(8px);
-}
-.leaflet-bar a:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Custom Map Marker Popup */
-.leaflet-popup-content-wrapper {
-    background: var(--panel-bg);
-    color: var(--text-primary);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--panel-border);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-}
-.leaflet-popup-tip {
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-}
-.leaflet-popup-content {
-    margin: 14px;
-    font-family: 'Inter', sans-serif;
-}
-.popup-custom-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: var(--accent-color);
-    margin-bottom: 4px;
-}
-.popup-custom-data {
-    font-size: 16px;
+.interactive-polyline {
+    cursor: crosshair !important;
 }

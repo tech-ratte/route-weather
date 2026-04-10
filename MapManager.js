@@ -36,7 +36,8 @@ class MapManager {
             color: '#6366f1',
             weight: 5,
             opacity: 0.8,
-            lineJoin: 'round'
+            lineJoin: 'round',
+            className: 'interactive-polyline'
         }).addTo(this.map);
 
         // ルート全体が見えるようにズームを調整
