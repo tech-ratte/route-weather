@@ -40,13 +40,15 @@ const weatherListObj = document.getElementById('weather-list');
 // Resize Sidebar Logic
 const controlsPanel = document.getElementById('controls');
 const resizeHandle = document.getElementById('resize-handle');
+const mobileResizeHandle = document.getElementById('mobile-resize-handle');
 let isResizing = false;
+let isMobileResizing = false;
 
 function init() {
     // 地図の初期化
     mapManager = new MapManager('map');
 
-    // サイドバーのリサイズ
+    // サイドバーのリサイズ (PC - 横幅)
     resizeHandle.addEventListener('mousedown', (e) => {
         isResizing = true;
         document.body.style.cursor = 'ew-resize';
@@ -54,22 +56,56 @@ function init() {
         e.preventDefault();
     });
 
-    document.addEventListener('mousemove', (e) => {
-        if (!isResizing) return;
-        
-        const newWidth = e.clientX - controlsPanel.getBoundingClientRect().left;
-        if (newWidth > 300 && newWidth < 800) {
-            controlsPanel.style.width = `${newWidth}px`;
-        }
-    });
+    // サイドバーのリサイズ (Mobile - 高さ)
+    const startMobileResize = (e) => {
+        isMobileResizing = true;
+        document.body.style.cursor = 'ns-resize';
+        e.preventDefault();
+    };
 
-    document.addEventListener('mouseup', () => {
+    mobileResizeHandle.addEventListener('mousedown', startMobileResize);
+    mobileResizeHandle.addEventListener('touchstart', (e) => {
+        startMobileResize(e);
+        // touchstart では preventDefault しない方がスクロール等に良い場合もあるが、
+        // 今回はリサイズハンドルなので固定したい
+    }, { passive: false });
+
+    const onMove = (e) => {
         if (isResizing) {
+            const newWidth = (e.clientX || e.touches[0].clientX) - controlsPanel.getBoundingClientRect().left;
+            if (newWidth > 300 && newWidth < 800) {
+                controlsPanel.style.width = `${newWidth}px`;
+            }
+        } else if (isMobileResizing) {
+            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : null);
+            if (clientY === null) return;
+
+            const panelRect = controlsPanel.getBoundingClientRect();
+            // 下端からの高さ
+            const newHeight = window.innerHeight - clientY;
+            const minHeight = window.innerHeight * 0.2;
+            const maxHeight = window.innerHeight * 0.85;
+
+            if (newHeight > minHeight && newHeight < maxHeight) {
+                controlsPanel.style.height = `${newHeight}px`;
+            }
+        }
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+
+    const onUp = () => {
+        if (isResizing || isMobileResizing) {
             isResizing = false;
+            isMobileResizing = false;
             document.body.style.cursor = 'default';
             resizeHandle.classList.remove('resizing');
         }
-    });
+    };
+
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
 
     // 日時プルダウンの初期化
     populateDateTimeSelects();

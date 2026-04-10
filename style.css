@@ -65,6 +65,34 @@ body, html {
     background: transparent;
     transition: background 0.2s;
     border-radius: 0 20px 20px 0;
+    z-index: 1001;
+}
+
+#mobile-resize-handle {
+    display: none;
+    position: sticky;
+    top: -24px; /* Offset parent padding */
+    left: 0;
+    width: calc(100% + 48px); /* Expand to edges */
+    margin-left: -24px;
+    margin-right: -24px;
+    height: 36px;
+    cursor: ns-resize;
+    z-index: 1002;
+    align-items: center;
+    justify-content: center;
+    background: rgba(25, 25, 30, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#mobile-resize-handle::after {
+    content: "";
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
 }
 
 #resize-handle:hover, #resize-handle.resizing {
@@ -406,7 +434,6 @@ button:active {
 
 .weather-card:hover {
     background: rgba(255, 255, 255, 0.07);
-    transform: scale(1.02) translateX(4px);
     border-color: var(--accent-color);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
@@ -441,6 +468,106 @@ button:active {
     flex-grow: 1;
     width: 100%;
     height: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.weather-details {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.weather-temp {
+    flex-shrink: 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.weather-delete-btn {
+    flex-shrink: 0;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: var(--danger-color) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    border-radius: 10px !important;
+    font-size: 16px !important;
+    transition: all 0.2s !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.weather-delete-btn:hover {
+    background: var(--danger-color) !important;
+    color: white !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Responsive (Mobile) */
+@media (max-width: 768px) {
+    #app-container {
+        flex-direction: column;
+    }
+
+    #controls {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 60vh;
+        max-height: 85vh;
+        border-radius: 24px 24px 0 0;
+        margin: 0;
+        padding: 24px 20px 20px 20px; /* Top padding for handle */
+        z-index: 2000;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    #resize-handle {
+        display: none;
+    }
+
+    #mobile-resize-handle {
+        display: flex;
+        top: -24px;
+        margin-left: -20px;
+        margin-right: -20px;
+        width: calc(100% + 40px);
+    }
+
+    header h1 {
+        font-size: 20px;
+        margin-top: 10px;
+    }
+
+    #map {
+        height: 40vh;
+        width: 100%;
+    }
+
+    .settings-panel {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+
+    .input-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .weather-card {
+        padding: 12px;
+    }
 }
 
 /* Map controls */
