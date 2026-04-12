@@ -43,24 +43,22 @@
                 <div class="settings-panel">
                     <p class="settings-title">📝 検索設定</p>
                     
-                    <div class="input-row">
+                    <div class="input-row settings-grid">
                         <div class="input-group">
-                            <label for="date-select">出発予定日</label>
-                            <select id="date-select"></select>
+                            <label>出発予定日時</label>
+                            <button type="button" id="datetime-picker-btn" class="picker-trigger-btn">
+                                <span id="selected-datetime-text">今すぐ</span>
+                                <span class="arrow-down">▼</span>
+                            </button>
                         </div>
                         <div class="input-group">
-                            <label for="time-select">出発時刻</label>
-                            <select id="time-select"></select>
+                            <label for="mode-select">移動手段</label>
+                            <select id="mode-select">
+                                <option value="driving">🚗 車</option>
+                                <option value="cycling">🚲 自転車</option>
+                                <option value="walking">🚶 徒歩</option>
+                            </select>
                         </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="mode-select">移動手段</label>
-                        <select id="mode-select">
-                            <option value="driving">🚗 車</option>
-                            <option value="cycling">🚲 自転車</option>
-                            <option value="walking">🚶 徒歩</option>
-                        </select>
                     </div>
                 </div>
 
@@ -72,7 +70,7 @@
                 <div id="search-tab" class="tab-content active">
                     <form id="route-form">
                         <div class="input-group">
-                            <label for="start-input">出発地 (Start)</label>
+                            <label for="start-input">出発地</label>
                             <div class="input-with-button">
                                 <input type="text" id="start-input" placeholder="例: 東京駅" required>
                                 <button type="button" id="current-loc-btn" title="現在地を取得">📍</button>
@@ -86,7 +84,7 @@
                         <button type="button" id="add-via-btn" class="sm-btn">＋ 経由地を追加</button>
                         
                         <div class="input-group">
-                            <label for="end-input">目的地 (Destination)</label>
+                            <label for="end-input">目的地</label>
                             <input type="text" id="end-input" placeholder="例: 箱根" required>
                         </div>
 
@@ -146,6 +144,28 @@
     <div id="loading-spinner-container" class="hidden">
         <div id="loading-spinner" class="spinner"></div>
         <span class="loading-text">計算中...</span>
+    </div>
+
+    <!-- DateTime Picker Modal -->
+    <div id="datetime-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>出発日時の選択</h3>
+                <button type="button" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="picker-container">
+                <div class="wheel-group">
+                    <div class="wheel" id="wheel-date"></div>
+                    <div class="wheel" id="wheel-hour"></div>
+                    <div class="wheel" id="wheel-minute"></div>
+                    <div class="wheel-highlights"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="set-now-btn" class="secondary-btn">現在時刻</button>
+                <button type="button" id="picker-confirm-btn">決定</button>
+            </div>
+        </div>
     </div>
 
     <!-- Leaflet JS -->

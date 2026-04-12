@@ -16,9 +16,22 @@ let currentGeoPos = null;
 const viaPointsContainer = document.getElementById('via-points-container');
 const addViaBtn = document.getElementById('add-via-btn');
 
-const dateSelect = document.getElementById('date-select');
-const timeSelect = document.getElementById('time-select');
+const datetimePickerBtn = document.getElementById('datetime-picker-btn');
+const datetimeText = document.getElementById('selected-datetime-text');
+const datetimeModal = document.getElementById('datetime-modal');
+const modalCloseBtn = document.getElementById('modal-close-btn');
+const pickerConfirmBtn = document.getElementById('picker-confirm-btn');
+const setNowBtn = document.getElementById('set-now-btn');
+const wheelDate = document.getElementById('wheel-date');
+const wheelHour = document.getElementById('wheel-hour');
+const wheelMinute = document.getElementById('wheel-minute');
+
 const modeSelect = document.getElementById('mode-select');
+
+// Picker state
+let selectedDate = 'now';
+let selectedHour = 0;
+let selectedMinute = 0;
 
 const uploadForm = document.getElementById('upload-form');
 const urlInput = document.getElementById('url-input');
@@ -118,6 +131,25 @@ function init() {
 
     // 日時プルダウンの初期化
     populateDateTimeSelects();
+    setupWheelListeners();
+
+    // 以前のSelect参照を削除し、新規ボタン等のイベントを設定
+    datetimePickerBtn.addEventListener('click', openPicker);
+    modalCloseBtn.addEventListener('click', () => datetimeModal.classList.add('hidden'));
+    pickerConfirmBtn.addEventListener('click', () => {
+        datetimeModal.classList.add('hidden');
+        const hStr = String(selectedHour).padStart(2, '0');
+        const mStr = String(selectedMinute).padStart(2, '0');
+        datetimeText.textContent = `${selectedDate} ${hStr}:${mStr}`;
+    });
+
+    setNowBtn.addEventListener('click', () => {
+        const now = new Date();
+        selectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        selectedHour = now.getHours();
+        selectedMinute = Math.floor(now.getMinutes() / 10) * 10;
+        scrollToCurrentSelection();
+    });
 
     // タブ切り替えイベント
     tabBtns.forEach(btn => {
@@ -167,7 +199,7 @@ function init() {
         waypoints.push(endObj);
 
         // 日時取得
-        let targetDate = getSelectedDate();
+        let targetDate = getDepartureTime();
 
         setLoading(true, searchBtn);
         try {
@@ -200,7 +232,7 @@ function init() {
             return;
         }
 
-        let targetDate = getSelectedDate();
+        let targetDate = getDepartureTime();
 
         setLoading(true, uploadBtn);
         try {
@@ -263,45 +295,131 @@ function init() {
     });
 }
 
-function getSelectedDate() {
-    const dStr = dateSelect.value;
-    if (dStr === 'now') return null;
-    
+function getDepartureTime() {
     // yyyy-mm-dd
-    const target = new Date(`${dStr}T00:00:00`);
-    target.setHours(parseInt(timeSelect.value, 10));
+    const target = new Date(`${selectedDate}T00:00:00`);
+    target.setHours(selectedHour);
+    target.setMinutes(selectedMinute);
+    target.setSeconds(0);
     return target;
 }
 
 function populateDateTimeSelects() {
     const now = new Date();
     
-    // 今すぐ(デフォルト)
-    dateSelect.add(new Option('今すぐ', 'now'));
-    
+    // Date Wheel
+    wheelDate.innerHTML = '';
     for (let i = 0; i < 7; i++) {
         const d = new Date(now);
         d.setDate(d.getDate() + i);
-        
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const dd = String(d.getDate()).padStart(2, '0');
         const dateString = `${yyyy}-${mm}-${dd}`;
-        
         let label = `${mm}/${dd}`;
         if (i === 0) label += " (今日)";
         if (i === 1) label += " (明日)";
-        
-        dateSelect.add(new Option(label, dateString));
+        wheelDate.innerHTML += `<div class="wheel-item" data-value="${dateString}">${label}</div>`;
     }
+    // Add empty spacers
+    wheelDate.innerHTML = '<div class="wheel-item"></div><div class="wheel-item"></div>' + wheelDate.innerHTML + '<div class="wheel-item"></div><div class="wheel-item"></div>';
 
+    // Hour Wheel
+    wheelHour.innerHTML = '';
     for (let h = 0; h < 24; h++) {
         const hh = String(h).padStart(2, '0');
-        timeSelect.add(new Option(`${hh}:00`, h));
+        wheelHour.innerHTML += `<div class="wheel-item" data-value="${h}">${hh}時</div>`;
     }
+    wheelHour.innerHTML = '<div class="wheel-item"></div><div class="wheel-item"></div>' + wheelHour.innerHTML + '<div class="wheel-item"></div><div class="wheel-item"></div>';
+
+    // Minute Wheel
+    wheelMinute.innerHTML = '';
+    for (let m = 0; m < 60; m += 10) {
+        const mm = String(m).padStart(2, '0');
+        wheelMinute.innerHTML += `<div class="wheel-item" data-value="${m}">${mm}分</div>`;
+    }
+    wheelMinute.innerHTML = '<div class="wheel-item"></div><div class="wheel-item"></div>' + wheelMinute.innerHTML + '<div class="wheel-item"></div><div class="wheel-item"></div>';
+
+    // Initial state
+    selectedHour = now.getHours();
+    selectedMinute = Math.floor(now.getMinutes() / 10) * 10;
+}
+
+function setupWheelListeners() {
+    [wheelDate, wheelHour, wheelMinute].forEach(wheel => {
+        wheel.addEventListener('scroll', () => {
+            updateWheelSelection(wheel);
+        });
+
+        // マウスホイールでの操作を1ステップずつに制限
+        let isScrolling = false;
+        wheel.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (isScrolling) return;
+
+            isScrolling = true;
+            const itemHeight = 36;
+            const direction = e.deltaY > 0 ? 1 : -1;
+            
+            wheel.scrollBy({
+                top: direction * itemHeight,
+                behavior: 'smooth'
+            });
+
+            setTimeout(() => {
+                isScrolling = false;
+            }, 100); // 連続スクロール防止のクールダウン
+        }, { passive: false });
+    });
+}
+
+function updateWheelSelection(wheel) {
+    const items = wheel.querySelectorAll('.wheel-item[data-value]');
+    const wheelCenter = wheel.getBoundingClientRect().top + wheel.offsetHeight / 2;
     
-    // 初期値を現在の時間に近くする
-    timeSelect.value = now.getHours();
+    let closestItem = null;
+    let minDiff = Infinity;
+
+    items.forEach(item => {
+        const itemCenter = item.getBoundingClientRect().top + item.offsetHeight / 2;
+        const diff = Math.abs(wheelCenter - itemCenter);
+        item.classList.remove('selected');
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestItem = item;
+        }
+    });
+
+    if (closestItem) {
+        closestItem.classList.add('selected');
+        const val = closestItem.dataset.value;
+        if (wheel === wheelDate) selectedDate = val;
+        else if (wheel === wheelHour) selectedHour = parseInt(val, 10);
+        else if (wheel === wheelMinute) selectedMinute = parseInt(val, 10);
+    }
+}
+
+function openPicker() {
+    datetimeModal.classList.remove('hidden');
+    // Scroll to current
+    scrollToCurrentSelection();
+}
+
+function scrollToCurrentSelection() {
+    const now = new Date();
+    // Simplified: just scroll to first items or current hour
+    setTimeout(() => {
+        scrollToValue(wheelDate, selectedDate);
+        scrollToValue(wheelHour, selectedHour);
+        scrollToValue(wheelMinute, selectedMinute);
+    }, 100);
+}
+
+function scrollToValue(wheel, value) {
+    const target = wheel.querySelector(`.wheel-item[data-value="${value}"]`);
+    if (target) {
+        wheel.scrollTop = target.offsetTop - (wheel.offsetHeight / 2) + (target.offsetHeight / 2);
+    }
 }
 
 function setLoading(isLoading, btnTarget) {
@@ -368,12 +486,7 @@ async function processRouteAndWeather(routeData, targetDate) {
     durationText.textContent = `所要時間: ${formatDuration(routeData.duration)}`;
     routeInfoBox.style.display = 'block';
     
-    // 計算完了後、経路サマリーが理想的な位置（一番上）にくるようにスクロール
-    setTimeout(() => {
-        if (routeInfoBox) {
-            routeInfoBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 200);
+    // 天気取得開始
 
     // 経路上の天気情報を取得 (5地点)
     currentWeatherDataList = await weatherService.getWeatherAlongRoute(
@@ -391,6 +504,28 @@ async function processRouteAndWeather(routeData, targetDate) {
     
     // 左パネルに天気リストを描画
     renderWeatherList(currentWeatherDataList);
+
+    // 計算と描画の完了後、スクロール位置を調整
+    setTimeout(() => {
+        const scrollArea = document.getElementById('controls-scroll-area');
+        if (weatherListObj && scrollArea) {
+            const areaHeight = scrollArea.clientHeight;
+            const scrollHeight = scrollArea.scrollHeight;
+            const listTop = weatherListObj.offsetTop;
+
+            // リストの先頭から末尾までの高さが十分にあるか判定
+            if (scrollHeight - listTop >= areaHeight) {
+                // 十分な高さがある場合は、リスト先頭（出発予定地）をシートの一番上に合わせる
+                weatherListObj.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                // リストが最後の方にあり、先頭を一番上に持ってくる隙間がない場合は一番下までスクロール
+                scrollArea.scrollTo({
+                    top: scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    }, 500);
 }
 
 // クリックで任意の地点に天気を追加する
