@@ -296,7 +296,11 @@ function init() {
 }
 
 function getDepartureTime() {
-    // yyyy-mm-dd
+    // selectedDate が 'now' や未設定の場合は現在時刻をベースにする
+    if (!selectedDate || selectedDate === 'now') {
+        const now = new Date();
+        return now;
+    }
     const target = new Date(`${selectedDate}T00:00:00`);
     target.setHours(selectedHour);
     target.setMinutes(selectedMinute);
@@ -341,6 +345,10 @@ function populateDateTimeSelects() {
     wheelMinute.innerHTML = '<div class="wheel-item"></div><div class="wheel-item"></div>' + wheelMinute.innerHTML + '<div class="wheel-item"></div><div class="wheel-item"></div>';
 
     // Initial state
+    const yyyy = now.getFullYear();
+    const initMM = String(now.getMonth() + 1).padStart(2, '0');
+    const initDD = String(now.getDate()).padStart(2, '0');
+    selectedDate = `${yyyy}-${initMM}-${initDD}`;
     selectedHour = now.getHours();
     selectedMinute = Math.floor(now.getMinutes() / 10) * 10;
 }
