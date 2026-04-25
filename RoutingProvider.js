@@ -99,6 +99,60 @@ class OsrmRoutingProvider extends RoutingProvider {
         };
     }
 
+    /**
+     * OSRM APIのルートレスポンスを共通フォーマットにパースするヘルパー
+     */
+    #parseRoute(route) {
+        const routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+
+        // ステップ情報を全legから抽出
+        const steps = [];
+        const tollKeywords = ['高速道路', '自動車道', '有料', 'ターンパイク', 'エクスプレス'];
+        let hasTollRoad = false;
+        const tollRoadNames = new Set();
+
+        if (route.legs) {
+            for (const leg of route.legs) {
+                if (!leg.steps) continue;
+                for (const step of leg.steps) {
+                    const name = step.name || '';
+                    const ref = step.ref || '';
+                    const stepCoords = step.geometry
+                        ? step.geometry.coordinates.map(c => [c[1], c[0]])
+                        : [];
+
+                    // 有料道路の判定（道路名キーワード or 路線番号 E* / C*）
+                    const isToll = tollKeywords.some(kw => name.includes(kw))
+                        || /^[EC]\d/.test(ref);
+                    if (isToll && name) {
+                        hasTollRoad = true;
+                        tollRoadNames.add(name);
+                    }
+
+                    steps.push({
+                        name,
+                        ref,
+                        distance: step.distance,
+                        duration: step.duration,
+                        geometry: stepCoords,
+                        maneuverType: step.maneuver?.type || '',
+                        maneuverModifier: step.maneuver?.modifier || '',
+                        isToll
+                    });
+                }
+            }
+        }
+
+        return {
+            routeCoordinates,
+            distance: route.distance,
+            duration: route.duration,
+            steps,
+            hasTollRoad,
+            tollRoadNames: [...tollRoadNames]
+        };
+    }
+
     async #fetchRouteMulti(locations) {
         // locations is array of [lat, lng]
         // OSRM requires lon,lat format separated by ;
@@ -111,7 +165,7 @@ class OsrmRoutingProvider extends RoutingProvider {
             'foot': 'foot'
         };
         const profile = profileMap[this.mode] || 'car';
-        const url = `https://routing.openstreetmap.de/routed-${profile}/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
+        const url = `https://routing.openstreetmap.de/routed-${profile}/route/v1/driving/${coordsStr}?overview=full&geometries=geojson&steps=true&alternatives=true`;
         
         const res = await fetch(url);
         if (!res.ok) throw new Error("Routing failed");
@@ -119,13 +173,14 @@ class OsrmRoutingProvider extends RoutingProvider {
         const data = await res.json();
         if (data.code !== "Ok") throw new Error("ルートが見つかりませんでした");
 
-        const route = data.routes[0];
-        const routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-        
+        const primaryRoute = this.#parseRoute(data.routes[0]);
+
+        // 代替ルートのパース
+        const alternatives = data.routes.slice(1).map(r => this.#parseRoute(r));
+
         return {
-            routeCoordinates,
-            distance: route.distance,
-            duration: route.duration
+            ...primaryRoute,
+            alternatives
         };
     }
 }

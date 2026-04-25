@@ -49,6 +49,11 @@ const routeInfoBox = document.getElementById('route-info');
 const distanceText = document.getElementById('distance-text');
 const durationText = document.getElementById('duration-text');
 const weatherListObj = document.getElementById('weather-list');
+const tollRoadInfo = document.getElementById('toll-road-info');
+const tollRoadNames = document.getElementById('toll-road-names');
+const altRoutesContainer = document.getElementById('alt-routes-container');
+const altRoutesList = document.getElementById('alt-routes-list');
+const roadLegendBox = document.getElementById('road-legend');
 
 // Resize Sidebar Logic
 const controlsPanel = document.getElementById('controls');
@@ -461,12 +466,141 @@ function formatDuration(seconds) {
 let currentRouteData = null;
 let currentWeatherDataList = [];
 let currentTargetDate = null;
+let currentAlternatives = []; // 代替ルート保持
+let allRoutes = []; // 全ルート（メイン＋代替）を保持
 
-// 共通処理: ルートを描画し、天気を取得して表示する
-async function processRouteAndWeather(routeData, targetDate) {
+/**
+ * 全ルートセグメントにクリックイベント（天気追加）を付与する
+ */
+function attachRouteClickHandlers() {
+    const segments = mapManager.routeSegments;
+    if (segments && segments.length > 0) {
+        segments.forEach(polyline => {
+            polyline.on('click', async (e) => {
+                L.DomEvent.stopPropagation(e);
+                const latlng = e.latlng;
+                await addCustomWeatherPoint([latlng.lat, latlng.lng]);
+            });
+        });
+    } else if (mapManager.routeLayer) {
+        // フォールバック（セグメントなしの場合）
+        mapManager.routeLayer.on('click', async (e) => {
+            L.DomEvent.stopPropagation(e);
+            const latlng = e.latlng;
+            await addCustomWeatherPoint([latlng.lat, latlng.lng]);
+        });
+    }
+}
+
+/**
+ * 有料道路情報をサイドバーに表示する
+ */
+function showTollRoadInfo(routeData) {
+    if (routeData.hasTollRoad && routeData.tollRoadNames && routeData.tollRoadNames.length > 0) {
+        tollRoadInfo.classList.remove('hidden');
+        tollRoadNames.textContent = routeData.tollRoadNames.join('、');
+    } else {
+        tollRoadInfo.classList.add('hidden');
+        tollRoadNames.textContent = '';
+    }
+}
+
+/**
+ * 道路の色凡例をサイドバーに表示する（有料道路のみ）
+ */
+function showRoadLegend(colorMap, tollRoadNames) {
+    if (!colorMap || !tollRoadNames || tollRoadNames.length === 0) {
+        roadLegendBox.classList.add('hidden');
+        return;
+    }
+
+    // 有料道路名のみフィルタ
+    const tollEntries = Object.entries(colorMap).filter(([name]) =>
+        tollRoadNames.some(toll => name.includes(toll))
+    );
+
+    if (tollEntries.length === 0) {
+        roadLegendBox.classList.add('hidden');
+        return;
+    }
+
+    roadLegendBox.classList.remove('hidden');
+    roadLegendBox.innerHTML = `
+        <div class="road-legend-title">🛣️ 有料道路</div>
+        <div class="road-legend-items">
+            ${tollEntries.map(([name, color]) => `
+                <div class="road-legend-item">
+                    <div class="road-legend-color" style="background: ${color}"></div>
+                    <span>${name}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+/**
+ * 代替ルートの選択UIをサイドバーに表示する
+ * @param {number} currentIndex - 現在選択中のルートのインデックス（allRoutes内）
+ * @param {Date} targetDate
+ */
+function showAlternativeRoutes(currentIndex, targetDate) {
+    if (allRoutes.length <= 1) {
+        altRoutesContainer.classList.add('hidden');
+        altRoutesList.innerHTML = '';
+        return;
+    }
+
+    altRoutesContainer.classList.remove('hidden');
+    altRoutesList.innerHTML = '';
+
+    allRoutes.forEach((route, routeIdx) => {
+        if (routeIdx === currentIndex) return; // メインルートは表示しない
+
+        const distKm = (route.distance / 1000).toFixed(1);
+        const durStr = formatDuration(route.duration);
+        const tollLabel = route.hasTollRoad ? ' 💰' : '';
+
+        const btn = document.createElement('button');
+        btn.className = 'alt-route-btn';
+        btn.innerHTML = `
+            <span class="alt-label">ルート ${routeIdx + 1}${tollLabel}</span>
+            <span class="alt-stats">${distKm} km ・ ${durStr}</span>
+        `;
+        btn.addEventListener('click', async () => {
+            setLoading(true, searchBtn);
+            try {
+                // 選択したルートをメインとして描画（allRoutesはそのまま維持）
+                await processRouteAndWeather(route, targetDate, routeIdx);
+            } catch (err) {
+                console.error(err);
+                showError(err.message || '代替ルートへの切り替えに失敗しました');
+            } finally {
+                setLoading(false, searchBtn);
+            }
+        });
+        altRoutesList.appendChild(btn);
+    });
+}
+
+/**
+ * 共通処理: ルートを描画し、天気を取得して表示する
+ * @param {Object} routeData - 描画するルートデータ
+ * @param {Date} targetDate - 出発日時
+ * @param {number|null} selectedRouteIndex - allRoutes内での選択ルートindex（初回はnull）
+ */
+async function processRouteAndWeather(routeData, targetDate, selectedRouteIndex = null) {
     currentRouteData = routeData;
     currentTargetDate = targetDate;
     
+    // 初回呼び出し時（検索直後）: allRoutesを構築
+    if (selectedRouteIndex === null) {
+        allRoutes = [routeData];
+        if (routeData.alternatives && routeData.alternatives.length > 0) {
+            allRoutes.push(...routeData.alternatives);
+        }
+        selectedRouteIndex = 0;
+    }
+
     mapManager.clear();
     weatherListObj.innerHTML = '';
     
@@ -476,16 +610,32 @@ async function processRouteAndWeather(routeData, targetDate) {
     const fitOptions = isMobile 
         ? { paddingTopLeft: [0, panelH + 20], paddingBottomRight: [20, 20] } 
         : { padding: [50, 50] };
-        
+
+    // 経路を描画
     mapManager.drawRoute(routeData.routeCoordinates, fitOptions);
-    
-    // 追加: 道路（ポリライン）自体のクリックイベント
-    if (mapManager.routeLayer) {
-        mapManager.routeLayer.on('click', async (e) => {
-            // イベントの伝播を止める
-            L.DomEvent.stopPropagation(e);
-            const latlng = e.latlng;
-            await addCustomWeatherPoint([latlng.lat, latlng.lng]);
+
+    // ルートセグメントにクリックイベントを付与
+    attachRouteClickHandlers();
+
+    // 代替ルート（選択中以外）を地図上に描画
+    const otherRoutes = allRoutes
+        .map((r, i) => ({ route: r, index: i }))
+        .filter(({ index }) => index !== selectedRouteIndex);
+
+    if (otherRoutes.length > 0) {
+        const altsForMap = otherRoutes.map(({ route }) => route);
+        mapManager.drawAlternativeRoutes(altsForMap, async (mapAltIdx) => {
+            // mapAltIdx は otherRoutes 配列のインデックスなので allRoutes のインデックスに変換
+            const realIndex = otherRoutes[mapAltIdx].index;
+            setLoading(true, searchBtn);
+            try {
+                await processRouteAndWeather(allRoutes[realIndex], targetDate, realIndex);
+            } catch (err) {
+                console.error(err);
+                showError(err.message || '代替ルートへの切り替えに失敗しました');
+            } finally {
+                setLoading(false, searchBtn);
+            }
         });
     }
     
@@ -493,9 +643,17 @@ async function processRouteAndWeather(routeData, targetDate) {
     distanceText.textContent = `距離: ${formatDistance(routeData.distance)}`;
     durationText.textContent = `所要時間: ${formatDuration(routeData.duration)}`;
     routeInfoBox.style.display = 'block';
+
+    // 有料道路情報の表示
+    showTollRoadInfo(routeData);
+
+    // 代替ルートの選択UI（サイドバー）
+    showAlternativeRoutes(selectedRouteIndex, targetDate);
+
+    // 道路名凡例は非表示
+    roadLegendBox.classList.add('hidden');
     
     // 天気取得開始
-
     // 経路上の天気情報を取得 (5地点)
     currentWeatherDataList = await weatherService.getWeatherAlongRoute(
         routeData.routeCoordinates, 
@@ -521,12 +679,9 @@ async function processRouteAndWeather(routeData, targetDate) {
             const scrollHeight = scrollArea.scrollHeight;
             const listTop = weatherListObj.offsetTop;
 
-            // リストの先頭から末尾までの高さが十分にあるか判定
             if (scrollHeight - listTop >= areaHeight) {
-                // 十分な高さがある場合は、リスト先頭（出発予定地）をシートの一番上に合わせる
                 weatherListObj.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
-                // リストが最後の方にあり、先頭を一番上に持ってくる隙間がない場合は一番下までスクロール
                 scrollArea.scrollTo({
                     top: scrollHeight,
                     behavior: 'smooth'

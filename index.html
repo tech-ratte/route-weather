@@ -122,10 +122,21 @@
                 
                 <div class="route-info" id="route-info">
                     <h3>経路サマリー</h3>
-                    <p id="distance-text">距離: ---</p>
-                    <p id="duration-text">所要時間: ---</p>
+                    <div class="route-summary-row">
+                        <p id="distance-text">距離: ---</p>
+                        <p id="duration-text">所要時間: ---</p>
+                    </div>
+                    <div id="toll-road-info" class="toll-road-info hidden">
+                        <span class="toll-badge">💰 有料道路</span>
+                        <span id="toll-road-names" class="toll-road-names"></span>
+                    </div>
+                    <div id="alt-routes-container" class="alt-routes-container hidden">
+                        <p class="alt-routes-title">🔀 代替ルート</p>
+                        <div id="alt-routes-list" class="alt-routes-list"></div>
+                    </div>
+                    <div id="road-legend" class="road-legend hidden"></div>
                     <p class="hint-text" id="panel-hint">
-                        💡 地図上の<strong>ルート（青い線）をクリック</strong>すると、その地点の天気を追加できます。
+                        💡 地図上の<strong>ルートをクリック</strong>すると、その地点の天気を追加できます。
                     </p>
                 </div>
                 
