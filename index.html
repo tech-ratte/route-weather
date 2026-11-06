@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ten-Go!</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- SEO & SNS Meta Tags -->
@@ -36,12 +36,12 @@
                         <p>目的地までの道中の天気を確認</p>
                     </div>
                     <div class="header-hint" id="header-hint">
-                        💡 経路クリックで地点追加
+                        経路クリックで地点追加
                     </div>
                 </header>
 
                 <div class="settings-panel">
-                    <p class="settings-title">📝 検索設定</p>
+                    <p class="settings-title">検索設定</p>
                     
                     <div class="input-row settings-grid">
                         <div class="input-group">
@@ -54,9 +54,9 @@
                         <div class="input-group">
                             <label for="mode-select">移動手段</label>
                             <select id="mode-select">
-                                <option value="driving">🚗 車</option>
-                                <option value="cycling">🚲 自転車</option>
-                                <option value="walking">🚶 徒歩</option>
+                                <option value="driving">車</option>
+                                <option value="cycling">自転車</option>
+                                <option value="walking">徒歩</option>
                             </select>
                         </div>
                     </div>
@@ -126,17 +126,13 @@
                         <p id="distance-text">距離: ---</p>
                         <p id="duration-text">所要時間: ---</p>
                     </div>
-                    <div id="toll-road-info" class="toll-road-info hidden">
-                        <span class="toll-badge">💰 有料道路</span>
-                        <span id="toll-road-names" class="toll-road-names"></span>
-                    </div>
                     <div id="alt-routes-container" class="alt-routes-container hidden">
-                        <p class="alt-routes-title">🔀 代替ルート</p>
+                        <p class="alt-routes-title">代替ルート</p>
                         <div id="alt-routes-list" class="alt-routes-list"></div>
                     </div>
                     <div id="road-legend" class="road-legend hidden"></div>
                     <p class="hint-text" id="panel-hint">
-                        💡 地図上の<strong>ルートをクリック</strong>すると、その地点の天気を追加できます。
+                        地図上の<strong>ルートをクリック</strong>すると、その地点の天気を追加できます。
                     </p>
                 </div>
                 

@@ -49,8 +49,6 @@ const routeInfoBox = document.getElementById('route-info');
 const distanceText = document.getElementById('distance-text');
 const durationText = document.getElementById('duration-text');
 const weatherListObj = document.getElementById('weather-list');
-const tollRoadInfo = document.getElementById('toll-road-info');
-const tollRoadNames = document.getElementById('toll-road-names');
 const altRoutesContainer = document.getElementById('alt-routes-container');
 const altRoutesList = document.getElementById('alt-routes-list');
 const roadLegendBox = document.getElementById('road-legend');
@@ -493,52 +491,6 @@ function attachRouteClickHandlers() {
 }
 
 /**
- * 有料道路情報をサイドバーに表示する
- */
-function showTollRoadInfo(routeData) {
-    if (routeData.hasTollRoad && routeData.tollRoadNames && routeData.tollRoadNames.length > 0) {
-        tollRoadInfo.classList.remove('hidden');
-        tollRoadNames.textContent = routeData.tollRoadNames.join('、');
-    } else {
-        tollRoadInfo.classList.add('hidden');
-        tollRoadNames.textContent = '';
-    }
-}
-
-/**
- * 道路の色凡例をサイドバーに表示する（有料道路のみ）
- */
-function showRoadLegend(colorMap, tollRoadNames) {
-    if (!colorMap || !tollRoadNames || tollRoadNames.length === 0) {
-        roadLegendBox.classList.add('hidden');
-        return;
-    }
-
-    // 有料道路名のみフィルタ
-    const tollEntries = Object.entries(colorMap).filter(([name]) =>
-        tollRoadNames.some(toll => name.includes(toll))
-    );
-
-    if (tollEntries.length === 0) {
-        roadLegendBox.classList.add('hidden');
-        return;
-    }
-
-    roadLegendBox.classList.remove('hidden');
-    roadLegendBox.innerHTML = `
-        <div class="road-legend-title">🛣️ 有料道路</div>
-        <div class="road-legend-items">
-            ${tollEntries.map(([name, color]) => `
-                <div class="road-legend-item">
-                    <div class="road-legend-color" style="background: ${color}"></div>
-                    <span>${name}</span>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-/**
  * 代替ルートの選択UIをサイドバーに表示する
  * @param {number} currentIndex - 現在選択中のルートのインデックス（allRoutes内）
  * @param {Date} targetDate
@@ -558,12 +510,11 @@ function showAlternativeRoutes(currentIndex, targetDate) {
 
         const distKm = (route.distance / 1000).toFixed(1);
         const durStr = formatDuration(route.duration);
-        const tollLabel = route.hasTollRoad ? ' 💰' : '';
 
         const btn = document.createElement('button');
         btn.className = 'alt-route-btn';
         btn.innerHTML = `
-            <span class="alt-label">ルート ${routeIdx + 1}${tollLabel}</span>
+            <span class="alt-label">ルート ${routeIdx + 1}</span>
             <span class="alt-stats">${distKm} km ・ ${durStr}</span>
         `;
         btn.addEventListener('click', async () => {
@@ -643,9 +594,6 @@ async function processRouteAndWeather(routeData, targetDate, selectedRouteIndex 
     distanceText.textContent = `距離: ${formatDistance(routeData.distance)}`;
     durationText.textContent = `所要時間: ${formatDuration(routeData.duration)}`;
     routeInfoBox.style.display = 'block';
-
-    // 有料道路情報の表示
-    showTollRoadInfo(routeData);
 
     // 代替ルートの選択UI（サイドバー）
     showAlternativeRoutes(selectedRouteIndex, targetDate);
@@ -766,7 +714,7 @@ function renderWeatherList(weatherDataList) {
                 <div class="weather-desc">${wInfo.text}${dateStr}</div>
             </div>
             <div class="weather-temp">${data.temperature}°C</div>
-            <button class="weather-delete-btn" title="削除">🗑️</button>
+            <button class="weather-delete-btn" title="削除">×</button>
         `;
         
         // 削除ボタンのイベント

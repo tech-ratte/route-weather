@@ -4,20 +4,20 @@
 class MapManager {
     // ダークマップ向けの鮮やかなカラーパレット
     static ROAD_COLORS = [
-        '#6366f1', // indigo
-        '#f59e0b', // amber
-        '#10b981', // emerald
-        '#ef4444', // red
-        '#8b5cf6', // violet
-        '#06b6d4', // cyan
-        '#f97316', // orange
-        '#ec4899', // pink
-        '#14b8a6', // teal
-        '#a855f7', // purple
-        '#22d3ee', // light cyan
-        '#84cc16', // lime
-        '#fb923c', // light orange
-        '#c084fc', // light purple
+        '#4d8c0f', // dark lime
+        '#1d7fb8', // sky
+        '#d97706', // amber
+        '#0f8a62', // emerald
+        '#d64545', // red
+        '#0e8aa8', // cyan
+        '#ea580c', // orange
+        '#3a6c0a', // deeper lime
+        '#0f766e', // teal
+        '#0284c7', // blue
+        '#65a30d', // mid lime
+        '#2563eb', // strong blue
+        '#c2410c', // deep orange
+        '#15803d', // green
     ];
 
     constructor(containerId) {
@@ -27,11 +27,10 @@ class MapManager {
         
         L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-        // ダークテーマ風のOpenStreetMapタイルを使用
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
+        // OpenStreetMap標準タイルを使用
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
         }).addTo(this.map);
 
         this.routeLayer = null;        // 互換性のための単一ルート参照
@@ -54,9 +53,9 @@ class MapManager {
 
         // 新しいルートを描画
         this.routeLayer = L.polyline(routeCoords, {
-            color: '#6366f1',
-            weight: 5,
-            opacity: 0.8,
+            color: '#4d8c0f',
+            weight: 6,
+            opacity: 0.9,
             lineJoin: 'round',
             className: 'interactive-polyline'
         }).addTo(this.map);
@@ -96,7 +95,7 @@ class MapManager {
             if (group.geometry.length < 2) return;
 
             const color = (group.displayName && colorMap[group.displayName])
-                || '#64748b'; // 無名道路のデフォルト色
+                || '#38bdf8'; // 無名道路のデフォルト色
 
             const polyline = L.polyline(group.geometry, {
                 color: color,
@@ -133,9 +132,9 @@ class MapManager {
 
         alternatives.forEach((alt, index) => {
             const polyline = L.polyline(alt.routeCoordinates, {
-                color: '#94a3b8',
+                color: '#7dd3fc',
                 weight: 4,
-                opacity: 0.35,
+                opacity: 0.45,
                 dashArray: '8, 8',
                 lineJoin: 'round',
                 className: 'alternative-route-polyline'
@@ -143,10 +142,10 @@ class MapManager {
 
             // ホバーでハイライト
             polyline.on('mouseover', () => {
-                polyline.setStyle({ opacity: 0.7, weight: 6, color: '#cbd5e1' });
+                polyline.setStyle({ opacity: 0.8, weight: 6, color: '#38bdf8' });
             });
             polyline.on('mouseout', () => {
-                polyline.setStyle({ opacity: 0.35, weight: 4, color: '#94a3b8' });
+                polyline.setStyle({ opacity: 0.45, weight: 4, color: '#7dd3fc' });
             });
 
             // クリックで選択
@@ -198,7 +197,7 @@ class MapManager {
             // HTMLを利用したカスタムアイコン
             const customIcon = L.divIcon({
                 className: 'custom-weather-icon',
-                html: `<div style="font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">${wInfo.icon}</div>`,
+                html: `<div style="font-size: 24px; filter: drop-shadow(0 2px 4px rgba(40,110,150,0.25));">${wInfo.icon}</div>`,
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             });
@@ -255,8 +254,7 @@ class MapManager {
                     ref,
                     geometry: [...step.geometry],
                     totalDistance: step.distance,
-                    totalDuration: step.duration,
-                    isToll: step.isToll
+                    totalDuration: step.duration
                 };
                 groups.push(current);
             }

@@ -107,9 +107,6 @@ class OsrmRoutingProvider extends RoutingProvider {
 
         // ステップ情報を全legから抽出
         const steps = [];
-        const tollKeywords = ['高速道路', '自動車道', '有料', 'ターンパイク', 'エクスプレス'];
-        let hasTollRoad = false;
-        const tollRoadNames = new Set();
 
         if (route.legs) {
             for (const leg of route.legs) {
@@ -121,14 +118,6 @@ class OsrmRoutingProvider extends RoutingProvider {
                         ? step.geometry.coordinates.map(c => [c[1], c[0]])
                         : [];
 
-                    // 有料道路の判定（道路名キーワード or 路線番号 E* / C*）
-                    const isToll = tollKeywords.some(kw => name.includes(kw))
-                        || /^[EC]\d/.test(ref);
-                    if (isToll && name) {
-                        hasTollRoad = true;
-                        tollRoadNames.add(name);
-                    }
-
                     steps.push({
                         name,
                         ref,
@@ -136,8 +125,7 @@ class OsrmRoutingProvider extends RoutingProvider {
                         duration: step.duration,
                         geometry: stepCoords,
                         maneuverType: step.maneuver?.type || '',
-                        maneuverModifier: step.maneuver?.modifier || '',
-                        isToll
+                        maneuverModifier: step.maneuver?.modifier || ''
                     });
                 }
             }
@@ -147,9 +135,7 @@ class OsrmRoutingProvider extends RoutingProvider {
             routeCoordinates,
             distance: route.distance,
             duration: route.duration,
-            steps,
-            hasTollRoad,
-            tollRoadNames: [...tollRoadNames]
+            steps
         };
     }
 
